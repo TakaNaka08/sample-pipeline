@@ -53,6 +53,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-test-report
+          name: android-unit-test-report
           path: '**/build/reports/tests/**' # Location of Gradle HTML test reports
           retention-days: 7 # Auto-delete artifact after 7 days to save storage
