@@ -1,0 +1,77 @@
+name: Android Pre-Merge Verification (Develop Branch)
+
+# 1. Pipeline trigger conditions
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: # Allows manual trigger from the Actions tab or PR page
+
+permissions:
+  contents: read
+  checks: write # Required for mikepenz/action-junit-report to write check annotations
+
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+
+    # Condition: Run only if triggered manually (workflow_dispatch) OR
+    # if the Pull Request is opened from a branch starting with "feature"
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature'))
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Java Environment (JDK 17 is recommended for AndroidArchitectureSample)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # Enable caching of Gradle dependencies
+
+      # Step 3: Grant execution permission to the gradlew script
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      # Step 4: Run local unit tests (app/src/test)
+      - name: Run Unit Tests (app/src/test)
+        run: ./gradlew :app:testDebugUnitTest --continue
+
+      # Step 5: Run Android integration tests (app/src/androidTest)
+      # This action spins up a hardware-accelerated Android Emulator on ubuntu-latest, 
+      # runs the instrumented tests, and then terminates the emulator.
+      - name: Run Integration Tests (app/src/androidTest)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86
+          profile: Nexus 6
+          script: ./gradlew :app:connectedDebugAndroidTest --continue
+
+      # Step 6: Publish comprehensive Test Report on GitHub Actions UI (Checks Tab)
+      # Aggregates both local Unit Test results and Instrumented/Integration Test results.
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: |
+            **/build/test-results/**/*.xml
+            **/build/outputs/androidTest-results/**/*.xml
+
+      # Step 7: Upload detailed HTML reports as downloadable artifacts (Unit & Instrumented Tests)
+      - name: Upload HTML Test Reports Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-combined-test-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/reports/androidTests/connected/**
+          retention-days: 7
