@@ -1,0 +1,36 @@
+# Setting file of Operation on feature branches
+
+name: Android CI (Feature Branch Flow)
+
+# 1. Pipeline trigger conditions
+on:
+  push:
+    branches:
+      - 'feature*'
+      - 'feature/**'
+
+jobs:
+  test:
+    # Keep the default execution environment (ubuntu-latest)
+    runs-on: ubuntu-latest
+  
+  steps:
+    # Step 1: Checkout the repository code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    # Step 2: Set up Java Environment
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        cache: 'gradle' # Enable caching of Gradle dependencies to speed up subsequent workflow runs
+
+    # Step 3: Grant execution permission to the gradlew script
+    - name: Grant Execute Permission for Gradlew
+      run: chmod +x gradlew
+    
+    # Step 4: Run local unit tests located under app/src/test
+    - name: Run Unit Tests (app/src/test)
+      run: ./gradlew :app:testDebugUnitTest
