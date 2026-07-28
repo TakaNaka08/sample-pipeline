@@ -1,10 +1,10 @@
+name: Duplicates main to old master branch
 # # ------------------------------------------------------------------
 # # 初期設定の実行ファイル
 # # 都合上コメントアウト
 # # ------------------------------------------------------------------
 # # Duplicates default main branch to the old master branch
 
-# name: Duplicates main to old master branch
 
 # # Controls when the action will run. Triggers the workflow on push or pull request
 # # events but only for the main branch

@@ -1,6 +1,5 @@
-# Setting file of Operation on feature branches
-
 name: Android CI (Feature Branch Flow)
+# Setting file of Operation on feature branches
 
 # 1. Pipeline trigger conditions
 on:
