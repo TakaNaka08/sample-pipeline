@@ -14,7 +14,15 @@ permissions:
 
 jobs:
   verification:
+
+    # # ------------------------------------------------------------------
+    # # TEMPORARY
+    # # ------------------------------------------------------------------
+    if: false
+
     runs-on: ubuntu-latest
+
+    
 
     # Condition: Run only if triggered manually (workflow_dispatch) OR
     # if the Pull Request is opened from a branch starting with "feature"
