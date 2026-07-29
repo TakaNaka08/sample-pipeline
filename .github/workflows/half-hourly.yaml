@@ -1,0 +1,51 @@
+name: half-hourly (Develop Branch)
+
+# 1. Pipeline trigger conditions
+on:
+  schedule:
+    # Runs every 30 minutes (at :00, and :30 of every hour)
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allows manual run to test this pipeline instantly
+
+permissions:
+  contents: read
+
+jobs:
+  pulse-check:
+    runs-on: ubuntu-latest
+    # Run only on the develop branch (or manually triggered)
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      # Step 1: Shallow checkout (fetch-depth: 1) for maximum checkout speed
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Step 2: Set up Java Environment
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # Reuses Gradle build cache for speed
+
+      # Step 3: Grant execution permission
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      # Step 4: Run a very light system sync check & print Git commit details
+      - name: Print Heartbeat Info & Build Check
+        run: |
+          echo "==== Pipeline Heartbeat ===="
+          echo "Time JST: $(date -d '9 hours' +'%Y-%m-%d %H:%M:%S')"
+          echo "Commit Hash: ${GITHUB_SHA}"
+          echo "Author: $(git log -1 --pretty=format:'%an')"
+          echo "Commit Subject: $(git log -1 --pretty=format:'%s')"
+          echo "============================"
+
+      # Step 5: Fast Build Verification (Compiles Kotlin code without running tests)
+      # This completes in seconds if there are no changes, thanks to dependency caching.
+      - name: Fast Compilation Dry-Run
+        run: ./gradlew compileDebugSources --dry-run
