@@ -1,0 +1,58 @@
+name: Android CI (Feature Branch Flow)
+# Setting file of Operation on feature branches
+
+# 1. Pipeline trigger conditions
+on:
+  push:
+    branches:
+      - 'feature*'
+      - 'feature/**'
+
+# Required permissions for creating Test Report annotations in GitHub UI
+permissions:
+  contents: read
+  checks: write  # Crucial for mikepenz/action-junit-report to post results
+
+jobs:
+  test:
+    # Keep the default execution environment (ubuntu-latest)
+    runs-on: ubuntu-latest
+  
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      # Step 2: Set up Java Environment
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # Enable caching of Gradle dependencies to speed up subsequent workflow runs
+
+      # Step 3: Grant execution permission to the gradlew script
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+      
+      # Step 4: Run local unit tests located under app/src/test
+      # We append "--continue" to run all tests even if some of them fail
+      - name: Run Unit Tests (app/src/test)
+        run: ./gradlew :app:testDebugUnitTest --continue
+      
+      # Step 5: Publish Test Report directly onto GitHub UI (Checks Tab)
+      # "if: always()" ensures the report is generated even if previous test execution failed
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always() 
+        with:
+          report_paths: '**/build/test-results/**/*.xml' # Search for JUnit XML results
+
+      # Step 6: Upload detailed HTML Test Report as a downloadable artifact (Zip)
+      - name: Upload HTML Test Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-unit-test-report
+          path: '**/build/reports/tests/**' # Location of Gradle HTML test reports
+          retention-days: 7 # Auto-delete artifact after 7 days to save storage
