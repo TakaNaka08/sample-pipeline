@@ -14,23 +14,13 @@ permissions:
 
 jobs:
   verification:
-
-    # # ------------------------------------------------------------------
-    # # TEMPORARY
-    # # ------------------------------------------------------------------
-    if: false
-
     runs-on: ubuntu-latest
 
     # Condition: Run only if triggered manually (workflow_dispatch) OR
     # if the Pull Request is opened from a branch starting with "feature"
-
-    # # ------------------------------------------------------------------
-    # # TEMPORARY
-    # # ---------------------------------------------------------------
-    # if: |
-    #   github.event_name == 'workflow_dispatch' || 
-    #   (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature'))
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature'))
 
     steps:
       # Step 1: Checkout the repository code
