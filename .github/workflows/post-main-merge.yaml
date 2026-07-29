@@ -1,0 +1,49 @@
+name: Build Android APK (Post-Merge to Main)
+
+# 1. Pipeline trigger conditions
+on:
+  push:
+    branches:
+      - main # Runs automatically when code is merged/pushed to the main branch
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  build-apks:
+    # Keep the default execution environment (ubuntu-latest)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Java Environment (JDK 17)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # Cache dependencies to speed up the compilation phase
+
+      # Step 3: Grant execution permission to the gradlew script
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      # Step 4: Compile and Build APKs (Without running any test tasks)
+      # "assembleDebug" compiles and outputs the debug-ready APK.
+      # "assembleRelease" compiles the release-ready version (unsigned by default).
+      - name: Build Debug and Release APKs
+        run: ./gradlew assembleDebug assembleRelease
+
+      # Step 5: Upload the compiled APKs as downloadable artifacts
+      # This saves the files in GitHub Actions UI for easy downloading.
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-apks
+          # Grabs all generated .apk files from the Gradle build outputs
+          path: '**/build/outputs/apk/**/*.apk'
+          retention-days: 14 # Files will be saved for 14 days before auto-deletion
